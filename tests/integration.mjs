@@ -1,0 +1,75 @@
+import { build } from 'esbuild';
+import { DatabaseSync } from 'node:sqlite';
+import { readFileSync, mkdirSync } from 'node:fs';
+import { createHmac, randomBytes } from 'node:crypto';
+import assert from 'node:assert/strict';
+import { pathToFileURL } from 'node:url';
+import path from 'node:path';
+
+mkdirSync('work',{recursive:true});
+await build({stdin:{contents:`export * as map from './app/api/map/route'; export * as houses from './app/api/houses/route'; export * as admin from './app/api/admin/route'; export * as webhook from './app/api/instagram/webhook/route'; export * from './lib/cities';`,resolveDir:process.cwd(),loader:'ts'},bundle:true,platform:'node',format:'esm',outfile:'work/test-bundle.mjs',plugins:[{name:'test-env',setup(b){b.onResolve({filter:/^cloudflare:workers$/},()=>({path:'env',namespace:'test'}));b.onLoad({filter:/.*/,namespace:'test'},()=>({contents:'export const env = globalThis.__mapTestEnv;'}));}}]});
+const sqlite=new DatabaseSync(':memory:');
+sqlite.exec(readFileSync('drizzle/0000_parallel_patriot.sql','utf8'));
+class Statement {
+  constructor(sql,args=[]){this.sql=sql;this.args=args;}
+  bind(...args){return new Statement(this.sql,args);}
+  async run(){const result=sqlite.prepare(this.sql).run(...this.args);return {meta:{changes:Number(result.changes)}};}
+  async all(){return {results:sqlite.prepare(this.sql).all(...this.args)};}
+  async first(){return sqlite.prepare(this.sql).get(...this.args)||null;}
+}
+const db={prepare(sql){return new Statement(sql);},async batch(statements){sqlite.exec('BEGIN');try{const result=[];for(const s of statements)result.push(await s.run());sqlite.exec('COMMIT');return result;}catch(e){sqlite.exec('ROLLBACK');throw e;}}};
+const secret=randomBytes(32).toString('hex');
+globalThis.__mapTestEnv={DB:db,INSTAGRAM_APP_SECRET:secret,INSTAGRAM_VERIFY_TOKEN:randomBytes(24).toString('hex'),INSTAGRAM_ACCOUNT_ID:'account-test',INSTAGRAM_MEDIA_IDS:'media-test'};
+const app=await import(pathToFileURL(path.resolve('work/test-bundle.mjs')));
+let checks=0;
+const check=(actual,expected,message)=>{assert.deepEqual(actual,expected,message);checks++;};
+const req=(url,method='GET',body,auth=true)=>new Request('https://map.test'+url,{method,headers:{...(auth?{'oai-authenticated-user-id':'owner'}:{}),'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});
+check((await (await app.map.GET(req('/api/map'))).json()).houses.length,0,'Map starts empty');
+check(app.parseCity('@alguem São Paulo SP')?.id,3550308,'Accent and profile handling');
+check(app.parseCity('sao paulo sp')?.id,3550308,'No-accent city');
+check(app.parseCity('Bauru SP')?.name,'Bauru','City with UF');
+check(app.parseCity('Bom Jesus'),null,'Ambiguous town stays pending');
+check(app.parseCity('Bauru RJ'),null,'Contradictory UF rejected');
+check(app.parseCity('nenhuma cidade aqui'),null,'Unrecognized comment stays pending');
+check(app.validUsername('<script>'),null,'Invalid username rejected');
+check(app.validUsername('@Teste.Casa'),'teste.casa','Username normalization');
+check((await app.houses.POST(req('/api/houses','POST',{username:'test_a',cityId:3550308},false))).status,403,'Anonymous writes rejected');
+check((await app.houses.POST(new Request('https://map.test/api/houses',{method:'POST',headers:{'oai-authenticated-user-id':'owner',origin:'https://other.test'},body:'{}'}))).status,403,'Cross-origin write rejected');
+check((await app.houses.POST(req('/api/houses','POST',{username:'test_a',cityId:0}))).status,400,'Invalid city rejected');
+check((await app.houses.POST(req('/api/houses','POST',{username:'test_a',cityId:3550308}))).status,201,'Manual house persisted');
+check((await app.houses.POST(req('/api/houses','POST',{username:'TEST_A',cityId:3304557}))).status,409,'Duplicate profile rejected');
+await app.houses.POST(req('/api/houses','POST',{username:'test_b',cityId:3550308}));
+let snapshot=await (await app.map.GET(req('/api/map'))).json();
+check(snapshot.houses.map(h=>h.founder),[true,false],'Exactly one founder per city');
+const payload=(id='comment-a',text='Curitiba PR',user='ig_test',actor='123')=>({object:'instagram',entry:[{id:'account-test',changes:[{field:'comments',value:{id,text,from:{id:actor,username:user},media:{id:'media-test'}}}]}]});
+const signed=(data,valid=true)=>{const raw=JSON.stringify(data);return new Request('https://map.test/api/instagram/webhook',{method:'POST',headers:{'x-hub-signature-256':'sha256='+createHmac('sha256',valid?secret:'wrong').update(raw).digest('hex')},body:raw});};
+check((await app.webhook.POST(signed(payload(),false))).status,401,'Forged webhook rejected');
+check((await app.webhook.POST(signed(payload()))).status,200,'Signed webhook accepted');
+for(let i=0;i<5;i++)await app.webhook.POST(signed(payload()));
+snapshot=await (await app.map.GET(req('/api/map'))).json();
+check(snapshot.houses.length,3,'Repeated webhook creates only one house');
+check(snapshot.houses[2].city.name,'Curitiba','Real city coordinates attached');
+await app.webhook.POST(signed(payload('comment-b','Recife PE','ig_changed','123')));
+check((await (await app.map.GET(req('/api/map'))).json()).houses.length,3,'Stable actor prevents renamed account duplicates');
+const other=payload('comment-other');other.entry[0].changes[0].value.media.id='unselected-post';
+await app.webhook.POST(signed(other));
+check(sqlite.prepare("SELECT COUNT(*) AS n FROM events WHERE id='comment-other'").get().n,0,'Unselected post ignored');
+const stranger=payload('other-account');stranger.entry[0].id='other';await app.webhook.POST(signed(stranger));
+check(sqlite.prepare("SELECT COUNT(*) AS n FROM events WHERE id='other-account'").get().n,0,'Unselected account ignored');
+await app.webhook.POST(signed(payload('unclear','Bom Jesus','ig_pending','999')));
+let pending=await (await app.admin.GET(req('/api/admin'))).json();
+check(pending.pending.length,1,'Ambiguous city queued');
+check((await app.admin.POST(req('/api/admin','POST',{eventId:'unclear',cityId:2211001}))).status,200,'Admin can resolve pending city');
+check((await (await app.admin.GET(req('/api/admin'))).json()).pending.length,0,'Resolved event removed from pending');
+check((await app.admin.GET(req('/api/admin','GET',undefined,false))).status,403,'Private comments protected');
+const igHouse=(await (await app.map.GET(req('/api/map'))).json()).houses.find(h=>h.username==='ig_test');
+await app.houses.DELETE(req('/api/houses','DELETE',{id:igHouse.id}));await app.webhook.POST(signed(payload()));
+check((await (await app.map.GET(req('/api/map'))).json()).houses.some(h=>h.username==='ig_test'),false,'Removed comment does not resurrect on webhook retry');
+await app.houses.DELETE(req('/api/houses','DELETE',{id:snapshot.houses[0].id}));
+check((await (await app.map.GET(req('/api/map'))).json()).houses.find(h=>h.username==='test_b').founder,true,'Founder transfers after deletion');
+check((await app.webhook.GET(new Request('https://map.test/api/instagram/webhook?hub.mode=subscribe&hub.verify_token='+globalThis.__mapTestEnv.INSTAGRAM_VERIFY_TOKEN+'&hub.challenge=1234'))).status,200,'Meta challenge accepted');
+check((await app.webhook.GET(req('/api/instagram/webhook?hub.mode=subscribe&hub.verify_token=wrong'))).status,403,'Invalid challenge denied');
+delete globalThis.__mapTestEnv.INSTAGRAM_APP_SECRET;
+check((await app.webhook.POST(signed(payload()))).status,503,'Unconfigured integration remains off');
+sqlite.close();
+console.log(`${checks} integration checks passed; isolated SQLite database; no production records created.`);
