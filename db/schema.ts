@@ -15,3 +15,13 @@ export const events = sqliteTable('events', {
   status: text('status').notNull(),
   createdAt: text('created_at').notNull(),
 });
+export const cityActs = sqliteTable('city_acts', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  username: text('username').notNull(),
+  cityId: integer('city_id').notNull(),
+  actType: text('act_type').notNull(),
+  label: text('label').notNull(),
+  points: integer('points').notNull(),
+  refId: text('ref_id').unique(),
+  createdAt: text('created_at').notNull(),
+}, table => [index('city_acts_city_idx').on(table.cityId), index('city_acts_user_idx').on(table.username)]);

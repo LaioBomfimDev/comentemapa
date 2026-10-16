@@ -1,6 +1,6 @@
 # Brasil em Casas
 
-Mapa interativo independente com 27 estados, busca em 5.571 localidades, casas por perfil, fundadores, comunidade, exportação e painel de integração Instagram.
+Mapa interativo independente com 27 estados, busca em 5.571 localidades, casas por perfil, fundadores, ranking por cidade, cargos, prédios evolutivos, comunidade, exportação e painel de integração Instagram.
 
 ## Executar localmente
 
@@ -18,6 +18,14 @@ Node.js >=22.13.0. Dependências: `npm ci`. Banco: gerar a migração somente ao
 - `node scripts/run-framework.mjs build`
 
 O helper de build/instalação Sites encontrou falha de resolução do npm.cmd neste Windows; os mesmos scripts foram executados pelo entrypoint Node explícito. Build, starter e plugin de publicação Sites foram preservados.
+
+## Estado da atualização
+
+A atualização inclui o Hall da Cidade, cargos de prefeito/vice/vereador/mestre de obras, pontuação por interações e cinco tipos de edifícios. Esses valores são experimentais.
+
+A versão hospedada no Sites ainda é a versão 1, anterior a esta atualização. O envio ao GitHub não publica automaticamente o site.
+
+A revisão encontrou três pendências: repetição ilimitada de atos, bônus por menções duplicadas e histórico da migração inicial alterado. Veja [a reprodução e as correções propostas](REVISAO_2026-10-16.md) antes de abrir uma campanha pública.
 
 ## Uso
 
