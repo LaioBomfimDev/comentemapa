@@ -1,0 +1,36 @@
+name: Vercel build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vercel-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  nextjs:
+    name: Clean install and Next.js build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22.x'
+          cache: npm
+      - name: Install from the committed lockfile
+        run: npm ci
+      - name: Build for Vercel
+        run: npm run build:vercel
+      - name: Verify the Next.js deployment manifest
+        run: test -f .next/routes-manifest.json
