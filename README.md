@@ -4,6 +4,8 @@ Mapa 3D independente do Brasil, com 27 estados, busca em 5.571 localidades, imó
 
 ## Executar localmente
 
+**Produção na Vercel:** configuração pronta em `vercel.json`; usar `npm run build:vercel`, saída `.next` e raiz do repositório. [Passos de deploy, banco e variáveis](DEPLOY_VERCEL.md). Sem banco, a Vercel exibe a demonstração de Salvador e os cinco modelos; moradores reais exigem D1 configurado.
+
 Node.js >=22.13.0. Dependências: `npm ci`. Banco: gerar a migração somente ao alterar o schema (`npm run db:generate`); migração inicial já incluída.
 
 1. `node scripts/run-framework.mjs build`
@@ -26,7 +28,7 @@ A atualização inclui o Hall da Cidade, cargos de prefeito/vice/vereador/mestre
 
 A apresentação foi reformulada para mapa em tela cheia com Three.js/WebGL. `/modelos` mostra cinco modelos 3D reais e permite baixar GLBs. Os cinco desenhos SVG anteriores foram preservados na galeria como originais 2D. O envio ao GitHub e a publicação Sites são operações separadas.
 
-A migração inicial foi restaurada e a tabela/índices de interações agora têm migração própria 0001; não há criação de schema durante requisições. Permanecem pendentes as regras de proteção contra repetição de atos e menções duplicadas antes da campanha pública. Veja [a revisão](REVISAO_2026-10-16.md).
+A migração inicial foi restaurada e a tabela/índices de interações agora têm migração própria 0001; não há criação de schema durante requisições. Ajustes de pontos no mapa agora exigem administrador e menções repetidas ao mesmo @ num comentário contam uma vez. Limites para comentários distintos e balanceamento continuam por definir. Veja [a revisão](REVISAO_2026-10-16.md).
 
 ## Uso
 

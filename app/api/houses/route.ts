@@ -19,7 +19,7 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  if (!sameOrigin(request)) return json({ error: 'Origem não autorizada.' }, 403);
+  if (!admin(request) || !sameOrigin(request)) return json({ error: 'Acesso restrito ao administrador.' }, 403);
   try {
     const input = await body(request);
     const actKey = String(input.actType || 'cheer');

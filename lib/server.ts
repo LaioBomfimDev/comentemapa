@@ -1,19 +1,12 @@
-import { env } from 'cloudflare:workers';
+import { config, database } from '@/lib/platform';
+export { config, database, admin, adminMode, storageStatus } from '@/lib/platform';
 import { cities, parseCity, validUsername } from './cities';
 
 export type BuildingType = 'chale' | 'vila' | 'prefeitura' | 'edificio' | 'metropole';
 export type CityRole = 'mayor' | 'vice_mayor' | 'councillor' | 'architect' | 'citizen';
 
-export const config = () => env as unknown as Record<string, string | undefined>;
-export function database() { if (!env.DB) throw new Error('Banco indisponível'); return env.DB; }
 export const json = (value: unknown, status = 200) => Response.json(value, { status, headers: { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' } });
 
-export function admin(request: Request) {
-  const user = request.headers.get('oai-authenticated-user-id');
-  const owner = config().MAP_ADMIN_USER_ID;
-  // Without an explicit owner, the Sites owner-private boundary authorizes editing.
-  return !!user && (owner ? user === owner : true);
-}
 export function sameOrigin(request: Request) {
   const origin = request.headers.get('origin');
   return !origin || origin === new URL(request.url).origin;
@@ -53,7 +46,7 @@ export async function ingestComment(event: { id:string; actor:string; username:s
   if (alreadySeen) return alreadySeen.status;
 
   const now = new Date().toISOString();
-  const mentions = (event.text.match(/@[\w.]+/g) || []).filter(m => validUsername(m) !== name).length;
+  const mentions = new Set((event.text.match(/@[\w.]+/g) || []).map(validUsername).filter(m => m && m !== name)).size;
   const mentionBonus = Math.min(75, mentions * 15);
 
   const existingHouse = await db.prepare('SELECT id,username,city_id FROM houses WHERE actor=? OR username=?')

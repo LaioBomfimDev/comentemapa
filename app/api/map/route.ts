@@ -1,4 +1,4 @@
-import { database, json, connectionStatus, cities, admin, type BuildingType, type CityRole } from '../../../lib/server';
+import { database, json, connectionStatus, cities, admin, adminMode, storageStatus, type BuildingType, type CityRole } from '../../../lib/server';
 
 const cityById = new Map(cities.map(c => [c.id, c]));
 
@@ -20,6 +20,10 @@ function resolveRole(rank: number, points: number): { role: CityRole; roleTitle:
 
 export async function GET(request: Request) {
   try {
+    const storage = storageStatus();
+    // A fresh Vercel deployment can render the visual demo without a database.
+    // Partial/invalid configuration still reports an error, never an empty map.
+    if (storage.mode === 'demo') return json({ houses: [], recentActs: [], totalCities: cities.length, connection: connectionStatus(), canEdit: false, adminMode, storage });
     const db = database();
     const rows = await db.prepare('SELECT id,username,city_id,source,created_at FROM houses ORDER BY id').all();
     const actTotals = await db.prepare('SELECT username, COALESCE(SUM(points),0) AS extra_points, COUNT(*) AS acts_count, COALESCE(MAX(id),0) AS max_id FROM city_acts GROUP BY username').all();
@@ -107,7 +111,7 @@ export async function GET(request: Request) {
     }));
 
     return Response.json(
-      { houses, recentActs, totalCities: cities.length, connection, canEdit },
+      { houses, recentActs, totalCities: cities.length, connection, canEdit, adminMode, storage },
       { headers: { ETag: etag, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' } }
     );
   } catch {
