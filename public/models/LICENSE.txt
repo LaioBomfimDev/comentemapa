@@ -1,0 +1,6 @@
+ComenteMapa — modelos 3D originais
+
+Os cinco modelos foram criados proceduralmente para este projeto, sem assets pagos ou texturas externas.
+Arquivos glTF 2.0 binários (.glb); eixo vertical Y, fachada +Z, base y=0.
+A autoria e os direitos destes assets acompanham o projeto ComenteMapa.
+Não são modelos copiados ou extraídos dos sites de referência.

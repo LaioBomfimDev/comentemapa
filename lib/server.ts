@@ -8,28 +8,6 @@ export const config = () => env as unknown as Record<string, string | undefined>
 export function database() { if (!env.DB) throw new Error('Banco indisponível'); return env.DB; }
 export const json = (value: unknown, status = 200) => Response.json(value, { status, headers: { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' } });
 
-let actsTableReady = false;
-export async function ensureActsTable() {
-  const db = database();
-  if (actsTableReady) return db;
-  try {
-    await db.prepare(`CREATE TABLE IF NOT EXISTS city_acts (
-      id integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-      username text NOT NULL,
-      city_id integer NOT NULL,
-      act_type text NOT NULL,
-      label text NOT NULL,
-      points integer NOT NULL,
-      ref_id text UNIQUE,
-      created_at text NOT NULL
-    )`).run();
-    actsTableReady = true;
-  } catch {
-    // Ignore if already exists or read-only
-  }
-  return db;
-}
-
 export function admin(request: Request) {
   const user = request.headers.get('oai-authenticated-user-id');
   const owner = config().MAP_ADMIN_USER_ID;
@@ -52,14 +30,14 @@ export function connectionStatus() {
   return { configured: required.every(key=>!!e[key]), missing: required.filter(key=>!e[key]), profile: e.INSTAGRAM_PROFILE || null, callback: '/api/instagram/webhook' };
 }
 export async function insertHouse(username: string, cityId: number, actor: string, source: string) {
-  const db = await ensureActsTable();
+  const db = database();
   const now = new Date().toISOString();
   const result = await db.prepare('INSERT OR IGNORE INTO houses (username,actor,city_id,source,created_at) VALUES (?,?,?,?,?)')
     .bind(username, actor, cityId, source, now).run();
   return result.meta.changes;
 }
 export async function recordAct(username: string, cityId: number, actType: string, label: string, points: number, refId: string | null = null) {
-  const db = await ensureActsTable();
+  const db = database();
   const now = new Date().toISOString();
   const res = await db.prepare(
     'INSERT OR IGNORE INTO city_acts (username,city_id,act_type,label,points,ref_id,created_at) VALUES (?,?,?,?,?,?,?)'
@@ -67,7 +45,7 @@ export async function recordAct(username: string, cityId: number, actType: strin
   return res.meta.changes;
 }
 export async function ingestComment(event: { id:string; actor:string; username:string; text:string }) {
-  const db = await ensureActsTable();
+  const db = database();
   const name = validUsername(event.username);
   if (!name || !event.id || !event.actor) return 'ignored';
 

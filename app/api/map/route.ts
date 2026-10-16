@@ -1,4 +1,4 @@
-import { ensureActsTable, json, connectionStatus, cities, admin, type BuildingType, type CityRole } from '../../../lib/server';
+import { database, json, connectionStatus, cities, admin, type BuildingType, type CityRole } from '../../../lib/server';
 
 const cityById = new Map(cities.map(c => [c.id, c]));
 
@@ -20,7 +20,7 @@ function resolveRole(rank: number, points: number): { role: CityRole; roleTitle:
 
 export async function GET(request: Request) {
   try {
-    const db = await ensureActsTable();
+    const db = database();
     const rows = await db.prepare('SELECT id,username,city_id,source,created_at FROM houses ORDER BY id').all();
     const actTotals = await db.prepare('SELECT username, COALESCE(SUM(points),0) AS extra_points, COUNT(*) AS acts_count, COALESCE(MAX(id),0) AS max_id FROM city_acts GROUP BY username').all();
     const recentActsRows = await db.prepare('SELECT id,username,city_id,act_type,label,points,created_at FROM city_acts ORDER BY id DESC LIMIT 40').all();

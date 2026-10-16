@@ -1,0 +1,150 @@
+{
+  "format": "glTF 2.0 binary",
+  "author": "ComenteMapa",
+  "license": "Original project artwork; see LICENSE.txt",
+  "unit": "metres-like",
+  "up": "Y",
+  "front": "+Z",
+  "models": [
+    {
+      "type": "chale",
+      "name": "Chalé",
+      "description": "Casa de reboco creme, telhado coral, chaminé e jardim florido.",
+      "file": "chale.glb",
+      "bytes": 104580,
+      "dimensions": {
+        "width": 2.65,
+        "height": 2.085,
+        "depth": 2.35
+      },
+      "bounds": {
+        "min": [
+          -1.325,
+          0,
+          -1.175
+        ],
+        "max": [
+          1.325,
+          2.085,
+          1.175
+        ]
+      },
+      "meshes": 16,
+      "materials": 16,
+      "vertices": 3828,
+      "triangles": 1276
+    },
+    {
+      "type": "vila",
+      "name": "Vila",
+      "description": "Duas casas coloridas, árvores e uma pequena praça entre vizinhos.",
+      "file": "vila.glb",
+      "bytes": 181024,
+      "dimensions": {
+        "width": 3.35,
+        "height": 2.2029,
+        "depth": 2.7
+      },
+      "bounds": {
+        "min": [
+          -1.675,
+          0,
+          -1.35
+        ],
+        "max": [
+          1.675,
+          2.2029,
+          1.35
+        ]
+      },
+      "meshes": 20,
+      "materials": 20,
+      "vertices": 6888,
+      "triangles": 2296
+    },
+    {
+      "type": "prefeitura",
+      "name": "Prefeitura",
+      "description": "Edifício cívico com colunas, escadaria, relógio dourado e bandeira.",
+      "file": "prefeitura.glb",
+      "bytes": 162528,
+      "dimensions": {
+        "width": 3.05,
+        "height": 3.28,
+        "depth": 2.75
+      },
+      "bounds": {
+        "min": [
+          -1.525,
+          0,
+          -1.375
+        ],
+        "max": [
+          1.525,
+          3.28,
+          1.375
+        ]
+      },
+      "meshes": 15,
+      "materials": 15,
+      "vertices": 6276,
+      "triangles": 2092
+    },
+    {
+      "type": "edificio",
+      "name": "Edifício",
+      "description": "Prédio de cinco andares com varandas, anexo e jardim na cobertura.",
+      "file": "edificio.glb",
+      "bytes": 375480,
+      "dimensions": {
+        "width": 2.9,
+        "height": 3.6194,
+        "depth": 2.59
+      },
+      "bounds": {
+        "min": [
+          -1.45,
+          0,
+          -1.275
+        ],
+        "max": [
+          1.45,
+          3.6194,
+          1.315
+        ]
+      },
+      "meshes": 15,
+      "materials": 15,
+      "vertices": 15144,
+      "triangles": 5048
+    },
+    {
+      "type": "metropole",
+      "name": "Metrópole",
+      "description": "Conjunto de três torres com terraços verdes e cúpula dourada central.",
+      "file": "metropole.glb",
+      "bytes": 797808,
+      "dimensions": {
+        "width": 3.2,
+        "height": 5.382,
+        "depth": 2.85
+      },
+      "bounds": {
+        "min": [
+          -1.6,
+          0,
+          -1.425
+        ],
+        "max": [
+          1.6,
+          5.382,
+          1.425
+        ]
+      },
+      "meshes": 16,
+      "materials": 16,
+      "vertices": 32712,
+      "triangles": 10904
+    }
+  ]
+}

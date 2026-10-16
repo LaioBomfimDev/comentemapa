@@ -1,4 +1,4 @@
-import { admin, sameOrigin, body, ensureActsTable, insertHouse, recordAct, cities, validUsername, json } from '../../../lib/server';
+import { admin, sameOrigin, body, database, insertHouse, recordAct, cities, validUsername, json } from '../../../lib/server';
 
 const ACT_CATALOG: Record<string, { points: number; label: string }> = {
   cheer: { points: 15, label: 'Recebeu aplausos para Prefeito no mapa (+15 pts)' },
@@ -26,7 +26,7 @@ export async function PATCH(request: Request) {
     const actDef = ACT_CATALOG[actKey];
     if (!actDef) return json({ error: 'Ato inválido.' }, 400);
 
-    const db = await ensureActsTable();
+    const db = database();
     let target: { id: number; username: string; city_id: number } | null = null;
     if (input.id) {
       target = await db.prepare('SELECT id,username,city_id FROM houses WHERE id=?').bind(Number(input.id)).first();
@@ -47,7 +47,7 @@ export async function DELETE(request: Request) {
   try {
     const input = await body(request); const id = Number(input.id);
     if (!Number.isSafeInteger(id) || id < 1) return json({error:'Casa inválida.'},400);
-    const db = await ensureActsTable();
+    const db = database();
     const found = await db.prepare('SELECT actor,username FROM houses WHERE id=?').bind(id).first<{actor:string;username:string}>();
     if (!found) return json({error:'Casa não encontrada.'},404);
     await db.batch([

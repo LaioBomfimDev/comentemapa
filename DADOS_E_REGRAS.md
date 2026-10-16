@@ -6,6 +6,8 @@
 - 5.571 registros de cidades: [kelvins/municipios-brasileiros](https://github.com/kelvins/municipios-brasileiros), arquivos `json/municipios.json` e `json/estados.json` baixados nesta execução. Este número descreve o catálogo fornecido, sem pretensão de certificar o total administrativo atual. Licença MIT preservada em `data/municipios-LICENSE.txt`.
 - Posição da casa: coordenada da sede da cidade cadastrada; não é endereço residencial. Não há tiles de terceiros, chave de mapas, geolocalização do visitante ou serviço pago de geocodificação.
 - Casas e comentários ficam no banco D1 da implantação. Preferências de interface não substituem o armazenamento no servidor.
-- SVG e ícone de casa próprios. Nenhum código, marca ou asset do reel foi copiado.
-- O site de referência não pôde ser carregado para inspeção visual; a mecânica foi baseada na legenda do reel acessível no primeiro atendimento.
+- Mapa e novos imóveis usam malhas 3D próprias em Three.js/WebGL; SVGs anteriores preservados como arquivo visual. Nenhum código, marca ou asset do site de referência foi copiado.
+- A primeira referência não pôde ser carregada no atendimento inicial. Posteriormente `naoeummapa.vercel.app` foi inspecionado no navegador: mapa em tela cheia, oceano azul, controles flutuantes, busca e detalhes. A nova UI segue essa organização com arte própria.
+- Demonstração visual pedida: `@elielexgay`, prefeito em Salvador-BA. É fixture de apresentação, separada do banco e de moradores reais.
+- Prefeito por maior pontuação foi confirmado pelo usuário em 2026-10-16. Valores, outros cargos e janelas de disputa continuam experimentais.
 - Capacidade: versão inicial, sem teste de carga para campanhas grandes. O mapa agrupa casas por cidade; API ainda entrega a lista completa. Antes de grande campanha: paginação, limites de tráfego, política de retenção e teste de carga.

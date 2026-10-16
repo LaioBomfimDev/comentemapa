@@ -1,6 +1,6 @@
 import { build } from 'esbuild';
 import { DatabaseSync } from 'node:sqlite';
-import { readFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, readdirSync, mkdirSync } from 'node:fs';
 import { createHmac, randomBytes } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { pathToFileURL } from 'node:url';
@@ -9,7 +9,7 @@ import path from 'node:path';
 mkdirSync('work',{recursive:true});
 await build({stdin:{contents:`export * as map from './app/api/map/route'; export * as houses from './app/api/houses/route'; export * as admin from './app/api/admin/route'; export * as webhook from './app/api/instagram/webhook/route'; export * from './lib/cities';`,resolveDir:process.cwd(),loader:'ts'},bundle:true,platform:'node',format:'esm',outfile:'work/test-bundle.mjs',plugins:[{name:'test-env',setup(b){b.onResolve({filter:/^cloudflare:workers$/},()=>({path:'env',namespace:'test'}));b.onLoad({filter:/.*/,namespace:'test'},()=>({contents:'export const env = globalThis.__mapTestEnv;'}));}}]});
 const sqlite=new DatabaseSync(':memory:');
-sqlite.exec(readFileSync('drizzle/0000_parallel_patriot.sql','utf8'));
+for(const file of readdirSync('drizzle').filter(f=>f.endsWith('.sql')).sort()) sqlite.exec(readFileSync('drizzle/'+file,'utf8'));
 class Statement {
   constructor(sql,args=[]){this.sql=sql;this.args=args;}
   bind(...args){return new Statement(this.sql,args);}
